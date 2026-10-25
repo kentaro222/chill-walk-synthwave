@@ -294,23 +294,7 @@
 
     const WALK_FRAME_INTERVAL = 0.7;
     const SCROLL_SPEED = 12 / WALK_FRAME_INTERVAL;
-    let walkSpeed = 1.5;
-    let targetWalkSpeed = walkSpeed;
-    let speedChangeRemaining = 8 + Math.random() * 6;
-
-    function updateWalkSpeed(dt) {
-        // 表示中の8〜14秒ごとに、ゆっくり歩きと早歩きを切り替える。
-        speedChangeRemaining -= dt;
-        if (speedChangeRemaining <= 0) {
-            targetWalkSpeed = targetWalkSpeed >= 1.5
-                ? 1.1 + Math.random() * 0.3
-                : 1.8 + Math.random() * 0.4;
-            speedChangeRemaining = 8 + Math.random() * 6;
-        }
-
-        // 速度を急に切り替えず、数秒かけて自然に加減速する。
-        walkSpeed += (targetWalkSpeed - walkSpeed) * (1 - Math.exp(-dt / 1.5));
-    }
+    const WALK_SPEED = 1.5;
 
 
     /*
@@ -1442,7 +1426,7 @@
          * 48x48 → 等倍表示を維持。
          */
         const playerGroundOverlap =
-            26;
+            32;
 
 
         const playerX =
@@ -1560,10 +1544,9 @@
             );
 
 
-        // 足の動きと背景の流れを同じ速度で変化させる。
-        updateWalkSpeed(dt);
-        animationTime += dt * walkSpeed;
-        scrollX += SCROLL_SPEED * dt * walkSpeed;
+        // 足の動きと背景の流れを一定の速度で進める。
+        animationTime += dt * WALK_SPEED;
+        scrollX += SCROLL_SPEED * dt * WALK_SPEED;
 
 
         /*
