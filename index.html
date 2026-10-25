@@ -97,7 +97,7 @@
     top: 6px;
     right: 12px;
 
-    font-size: var(--clock-size, 56px);
+    font-size: var(--clock-size, 72px);
     font-family: "Chill Digital", monospace;
     font-weight: 400;
     color: #fff;
@@ -294,6 +294,23 @@
 
     const WALK_FRAME_INTERVAL = 0.7;
     const SCROLL_SPEED = 12 / WALK_FRAME_INTERVAL;
+    let walkSpeed = 1.5;
+    let targetWalkSpeed = walkSpeed;
+    let speedChangeRemaining = 8 + Math.random() * 6;
+
+    function updateWalkSpeed(dt) {
+        // 表示中の8〜14秒ごとに、ゆっくり歩きと早歩きを切り替える。
+        speedChangeRemaining -= dt;
+        if (speedChangeRemaining <= 0) {
+            targetWalkSpeed = targetWalkSpeed >= 1.5
+                ? 1.1 + Math.random() * 0.3
+                : 1.8 + Math.random() * 0.4;
+            speedChangeRemaining = 8 + Math.random() * 6;
+        }
+
+        // 速度を急に切り替えず、数秒かけて自然に加減速する。
+        walkSpeed += (targetWalkSpeed - walkSpeed) * (1 - Math.exp(-dt / 1.5));
+    }
 
 
     /*
@@ -662,24 +679,8 @@
             );
 
 
-        /*
-         * 1倍以上の場合は、
-         * ピクセルアートを綺麗にするため
-         * 整数倍率を優先。
-         *
-         * スマホ縦画面など
-         * 1倍未満の場合はそのまま縮小。
-         */
-        const scale =
-            rawScale >= 1
-
-                ? Math.max(
-                    1,
-                    Math.floor(rawScale)
-                )
-
-                : rawScale;
-
+        // 小数倍率も使い、16:9のまま表示領域を最大限利用する。
+        const scale = rawScale;
 
         /*
          * 内部解像度は常に640x360。
@@ -709,7 +710,7 @@
         /* 時計も実際のシーン表示幅に比例させる。 */
         document.getElementById("game-wrapper").style.setProperty(
             "--clock-size",
-            `${Math.floor(INTERNAL_W * scale) * 56 / INTERNAL_W}px`
+            `${Math.floor(INTERNAL_W * scale) * 72 / INTERNAL_W}px`
         );
 
         ctx.imageSmoothingEnabled =
@@ -1559,11 +1560,10 @@
             );
 
 
-        /* 歩行は2コマのまま、背景は実経過時間に応じて滑らかに進める。
-         * 平均速度は以前と同じ約17.1px/秒。
-         */
-        animationTime += dt;
-        scrollX += SCROLL_SPEED * dt;
+        // 足の動きと背景の流れを同じ速度で変化させる。
+        updateWalkSpeed(dt);
+        animationTime += dt * walkSpeed;
+        scrollX += SCROLL_SPEED * dt * walkSpeed;
 
 
         /*
